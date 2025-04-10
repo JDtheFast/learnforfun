@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Volcano Escape</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Bungee', cursive;
+            margin: 0;
+            padding: 0;
+            background: #1A1A1A;
+            color: #fff;
+            overflow-y: scroll;
+            overflow-x: hidden;
+        }
+
+        #gameContainer {
+            width: 90%;
+            max-width: 1000px;
+            margin: 20px auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        #mainGame {
+            width: 100%;
+            padding: 20px;
+            border-radius: 15px;
+            position: relative;
+            background: url('https://www.transparenttextures.com/patterns/volcanic-rock.png'), linear-gradient(to bottom, #2C3E50 0%, #E67E22 100%);
+            box-shadow: 0 0 30px rgba(255, 69, 0, 0.5);
+            overflow: hidden;
+        }
+
+        #sidebar {
+            width: 100%;
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #2C3E50;
+            padding: 20px;
+            border-radius: 10px;
+            border: 1px solid #FF4500;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            color: #fff;
+        }
+
+        h1 {
+            color: #FF4500;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.7);
+            text-align: center;
+            margin-bottom: 15px;
+        }
+
+        #scoreBoard {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 8px;
+            color: #FFD700;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        .score-holder, #levelDisplay, #timer, #crystalsDisplay {
+            font-size: 18px;
+        }
+
+        #questionContainer {
+            height: 450px;
+            position: relative;
+            background: linear-gradient(to bottom, rgba(44, 62, 80, 0.8), rgba(230, 126, 34, 0.8));
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.5);
+        }
+
+        #lava {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 0;
+            background: linear-gradient(to top, #FF4500, #FFA500);
+            box-shadow: 0 -10px 20px rgba(255, 69, 0, 0.8);
+            transition: height 0.5s ease;
+            z-index: 1;
+            overflow: hidden;
+        }
+
+        #lava::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 10%, transparent 20%);
+            animation: bubble 2s infinite;
+        }
+
+        @keyframes bubble {
+            0% { transform: translateY(0) scale(1); opacity: 0.5; }
+            100% { transform: translateY(-100%) scale(1.5); opacity: 0; }
+        }
+
+        #player {
+            position: absolute;
+            left: 20px;
+            width: 40px;
+            height: 40px;
+            background: url('data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%23FFD700"><path d="M12 2a2 2 0 0 1 2 2v2h2v2h-2v4h2v2h-2v4h2v2h-2v2a2 2 0 0 1-2 2s-2-2-2-4v-2H8v-2h2v-4H8v-2h2V6H8V4h2V2z"/></svg>') no-repeat center;
+            background-size: contain;
+            transition: bottom 0.7s ease;
+            z-index: 3;
+            animation: sway 2s infinite alternate;
+        }
+
+        @keyframes sway {
+            0% { transform: rotate(-5deg); }
+            100% { transform: rotate(5deg); }
+        }
+
+        #wordDisplay {
+            font-size: 34px;
+            margin: 20px 0;
+            color: #FFD700;
+            text-shadow: 2px 2px 4px #000;
+            background: url('https://www.transparenttextures.com/patterns/cracked.png'), rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #FF4500;
+            box-shadow: inset 0 0 10px rgba(255, 69, 0, 0.5);
+            text-align: center;
+        }
+
+        #options {
+            position: relative;
+            z-index: 2;
+        }
+
+        #options button {
+            display: block;
+            width: 80%;
+            margin: 15px auto;
+            padding: 15px;
+            background: linear-gradient(to bottom, #4A2C2A, #2C1A18);
+            color: #FFD700;
+            border: 3px solid #FF4500;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 18px;
+            text-shadow: 1px 1px 2px #000;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.5);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        #options button::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            background: rgba(255, 69, 0, 0.3);
+            border-radius: 50%;
+            transform: translate(-50%, -50%);
+            transition: width 0.5s, height 0.5s;
+        }
+
+        #options button:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(255, 69, 0, 0.7);
+        }
+
+        #options button:hover::before {
+            width: 200%;
+            height: 200%;
+        }
+
+        #options button.correct {
+            animation: correctAnswer 0.7s;
+        }
+
+        #options button.incorrect {
+            animation: incorrectAnswer 0.7s;
+        }
+
+        @keyframes correctAnswer {
+            0% { background: #4CAF50; transform: scale(1); }
+            50% { background: #388E3C; transform: scale(1.1); box-shadow: 0 0 20px #4CAF50; }
+            100% { background: #4CAF50; transform: scale(1); }
+        }
+
+        @keyframes incorrectAnswer {
+            0% { background: #F44336; transform: translateX(0); }
+            20% { transform: translateX(-15px); }
+            40% { transform: translateX(15px); }
+            60% { transform: translateX(-10px); }
+            80% { transform: translateX(10px); }
+            100% { background: #F44336; transform: translateX(0); }
+        }
+
+        #correctAnswerDisplay {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 24px;
+            color: #FFD700;
+            background: rgba(0, 0, 0, 0.8);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(255, 69, 0, 0.5);
+            visibility: hidden;
+            z-index: 3;
+            text-shadow: 1px 1px 2px #000;
+        }
+
+        .checkpoint {
+            position: absolute;
+            left: 5px;
+            width: 10px;
+            height: 10px;
+            background: #555;
+            border-radius: 50%;
+            z-index: 2;
+            transition: background 0.3s;
+        }
+
+        .checkpoint.active {
+            background: #FF4500;
+            box-shadow: 0 0 10px #FF4500;
+        }
+
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            background-color: #FF4500;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            background-color: #E67E22;
+        }
+
+        #useCrystalBtn:disabled {
+            background-color: #757575;
+            cursor: not-allowed;
+        }
+
+        .fake-button {
+            padding: 10px 15px;
+            background-color: #FF4500;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+            margin-bottom: 15px;
+        }
+
+        .fake-button:hover {
+            background-color: #E67E22;
+        }
+
+        #csvFileInputContainer {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        #orId {
+            margin: 0 10px;
+        }
+
+        #textInput {
+            width: 100%;
+            height: 100px;
+            margin-top: 10px;
+            padding: 10px;
+            box-sizing: border-box;
+            border-radius: 4px;
+            background-color: #34495E;
+            color: #fff;
+            margin-bottom: 15px;
+        }
+
+        #exportStateToURL {
+            margin-bottom: 15px;
+        }
+
+        .smoke {
+            position: absolute;
+            width: 15px;
+            height: 15px;
+            background: rgba(150, 150, 150, 0.4);
+            border-radius: 50%;
+            bottom: 0;
+            animation: smokeRise 8s infinite;
+            z-index: 0;
+        }
+
+        @keyframes smokeRise {
+            0% { transform: translateY(0) scale(1); opacity: 0.8; }
+            100% { transform: translateY(-100vh) scale(2); opacity: 0; }
+        }
+
+        @media (max-width: 600px) {
+            #gameContainer {
+                width: 95%;
+            }
+            #mainGame, #sidebar {
+                padding: 15px;
+            }
+            #options button {
+                font-size: 16px;
+                padding: 10px;
+            }
+            #csvFileInputContainer {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            #orId {
+                margin: 10px 0;
+            }
+            h2 {
+                font-size: 18px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div id="gameContainer">
+        <div id="mainGame">
+            <h1>Volcano Escape</h1>
+            <div id="scoreBoard">
+                <div class="score-holder">Score: <span id="score">0</span></div>
+                <div id="levelDisplay">Step: <span id="step">1</span>/20</div>
+                <div>Time Left: <span id="timer">60</span>s</div>
+                <div>Crystals: <span id="crystals">0</span></div>
+            </div>
+            <div id="questionContainer">
+                <div id="lava"></div>
+                <div id="player"></div>
+                <div id="wordDisplay"></div>
+                <div id="options"></div>
+                <div id="correctAnswerDisplay">Loading...</div>
+            </div>
+            <button id="startButton">Start</button>
+            <div id="controls">
+                <button id="useCrystalBtn" disabled>Use Crystal</button>
+            </div>
+        </div>
+        <div id="sidebar">
+            <h2>Settings</h2>
+            <div id="csvFileInputContainer">
+                <label id="csvFileInputInput" for="csvFileInput" class="fake-button">Upload CSV (word,definition)</label>&ensp;
+                <input id="csvFileInput" type="file" accept=".csv" style="display: none">
+                <label for="clearButton" class="fake-button">Clear File</label>
+                <input id="clearButton" type="button" value="Clear" style="display: none">
+                <span id="orId">Or</span>
+            </div>
+            <textarea id="textInput" placeholder="Paste CSV data here, e.g.
+fast,Quick
+calm,Peaceful"></textarea>
+            <button id="exportStateToURL">Share</button>
+            <div id="csvSettings">
+                <div id="delim">
+                    <label>Delimiter</label>
+                    <div id="delim-comma"><input type="radio" id="comma" name="delimiter" value="," checked><label for="comma">Comma</label></div>
+                    <div id="delim-tab"><input type="radio" id="tab" name="delimiter" value="\t"><label for="tab">Tab</label></div>
+                    <div id="delim-custom"><input type="radio" id="custom" name="delimiter" value="custom"><label for="custom"><input type="text" id="customDelimiter" placeholder="custom"></label></div>
+                </div>
+                <div id="rowDelim">
+                    <label>Row Delimiter</label>
+                    <div id="rowDelim-comma"><input type="radio" id="rowComma" name="rowDelimiter" value="\n" checked><label for="rowComma">Newline</label></div>
+                    <div id="rowDelim-tab"><input type="radio" id="rowTab" name="rowDelimiter" value=";"><label for="rowTab">Semicolon</label></div>
+                    <div id="rowDelim-custom"><input type="radio" id="rowCustom" name="rowDelimiter" value="custom"><label for="rowCustom"><input type="text" id="customRowDelimiter" placeholder="custom"></label></div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const scoreEl = document.getElementById('score');
+            const stepEl = document.getElementById('step');
+            const timerEl = document.getElementById('timer');
+            const lavaEl = document.getElementById('lava');
+            const playerEl = document.getElementById('player');
+            const wordEl = document.getElementById('wordDisplay');
+            const optionsEl = document.getElementById('options');
+            const correctAnswerEl = document.getElementById('correctAnswerDisplay');
+            const crystalsEl = document.getElementById('crystals');
+            const useCrystalBtn = document.getElementById('useCrystalBtn');
+            const startBtn = document.getElementById('startButton');
+            const questionContainer = document.getElementById('questionContainer');
+
+            let score = 0;
+            let currentStep = 1;
+            let timeLeft = 60;
+            let streak = 0;
+            let crystals = 0;
+            let timerInterval;
+            let allQuestions = [];
+            let currentQuestion;
+
+            // Add checkpoints
+            for (let i = 0; i < 20; i++) {
+                const checkpoint = document.createElement('div');
+                checkpoint.classList.add('checkpoint');
+                checkpoint.style.bottom = `${10 + (i * (450 - 20) / 20)}px`;
+                questionContainer.appendChild(checkpoint);
+            }
+
+            // Add smoke particles
+            function addSmoke() {
+                const smoke = document.createElement('div');
+                smoke.classList.add('smoke');
+                smoke.style.left = `${Math.random() * 100}%`;
+                smoke.style.animationDuration = `${6 + Math.random() * 4}s`;
+                questionContainer.appendChild(smoke);
+                setTimeout(() => smoke.remove(), 8000);
+            }
+            setInterval(addSmoke, 1000);
+
+            function getDelim() {
+                const comma = document.getElementById('comma');
+                const tab = document.getElementById('tab');
+                if (comma.checked) return ",";
+                if (tab.checked) return "\t";
+                return document.getElementById('customDelimiter').value;
+            }
+
+            function getRowDelim() {
+                const rowComma = document.getElementById('rowComma');
+                const rowTab = document.getElementById('rowTab');
+                if (rowComma.checked) return "\n";
+                if (rowTab.checked) return ";";
+                return document.getElementById('customRowDelimiter').value;
+            }
+
+            function loadCSVData() {
+                allQuestions = [];
+                const textInput = document.getElementById('textInput');
+                if (textInput.value.trim()) {
+                    const lines = textInput.value.split(getRowDelim());
+                    allQuestions = lines.map(line => {
+                        const [word, definition] = line.split(getDelim()).map(s => s.trim());
+                        return { word, definition };
+                    }).filter(q => q.word && q.definition);
+                    updateGameState();
+                } else if (document.getElementById('csvFileInput').files[0]) {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const lines = e.target.result.split(getRowDelim());
+                        allQuestions = lines.map(line => {
+                            const [word, definition] = line.split(getDelim()).map(s => s.trim());
+                            return { word, definition };
+                        }).filter(q => q.word && q.definition);
+                        textInput.value = e.target.result;
+                        updateGameState();
+                    };
+                    reader.readAsText(document.getElementById('csvFileInput').files[0]);
+                } else {
+                    updateGameState();
+                }
+            }
+
+            function generateDistractors(correct) {
+                const allDefs = allQuestions.map(q => q.definition).filter(d => d !== correct);
+                const uniqueDefs = [...new Set(allDefs)];
+                if (uniqueDefs.length < 3) return ["Unknown A", "Unknown B", "Unknown C"];
+                return shuffleArray(uniqueDefs).slice(0, 3);
+            }
+
+            function updateGameState() {
+                if (allQuestions.length === 0) {
+                    correctAnswerEl.textContent = "No valid questions found. Upload a CSV or enter data.";
+                    correctAnswerEl.style.visibility = "visible";
+                } else {
+                    correctAnswerEl.textContent = "Press Start to climb the volcano!";
+                    correctAnswerEl.style.visibility = "visible";
+                }
+            }
+
+            function startGame() {
+                if (allQuestions.length === 0) {
+                    alert("No questions loaded! Please upload or enter CSV data.");
+                    return;
+                }
+                score = 0;
+                currentStep = 1;
+                timeLeft = 60;
+                streak = 0;
+                crystals = 0;
+                scoreEl.textContent = score;
+                stepEl.textContent = currentStep;
+                timerEl.textContent = timeLeft;
+                crystalsEl.textContent = crystals;
+                useCrystalBtn.disabled = true;
+                lavaEl.style.height = "0%";
+                playerEl.style.bottom = "10px";
+                correctAnswerEl.style.visibility = "hidden";
+                document.querySelectorAll('.checkpoint').forEach((cp, i) => cp.classList.toggle('active', i < currentStep - 1));
+                startTimer();
+                loadQuestion();
+            }
+
+            function startTimer() {
+                clearInterval(timerInterval);
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    timerEl.textContent = timeLeft;
+                    lavaEl.style.height = `${(60 - timeLeft) / 60 * 100}%`;
+                    if (timeLeft <= 0) endGame("The lava engulfed you! Game Over!");
+                }, 1000);
+            }
+
+            function loadQuestion() {
+                if (currentStep > 20) {
+                    endGame("You escaped the volcano! Victory!");
+                    return;
+                }
+                currentQuestion = allQuestions[Math.floor(Math.random() * allQuestions.length)];
+                wordEl.textContent = currentQuestion.word;
+                const options = [currentQuestion.definition, ...generateDistractors(currentQuestion.definition)];
+                shuffleArray(options);
+                optionsEl.innerHTML = "";
+                options.forEach(opt => {
+                    const btn = document.createElement("button");
+                    btn.textContent = opt;
+                    btn.addEventListener("click", (e) => checkAnswer(opt, e.target));
+                    optionsEl.appendChild(btn);
+                });
+                updatePlayerPosition();
+            }
+
+            function checkAnswer(selected, btn) {
+                if (selected === currentQuestion.definition) {
+                    streak++;
+                    if (streak % 3 === 0 && crystals < 3) {
+                        crystals++;
+                        crystalsEl.textContent = crystals;
+                        useCrystalBtn.disabled = false;
+                    }
+                    score += 10;
+                    currentStep++;
+                    scoreEl.textContent = score;
+                    stepEl.textContent = currentStep;
+                    btn.classList.add('correct');
+                    timeLeft = Math.min(60, timeLeft + 5);
+                    timerEl.textContent = timeLeft;
+                    lavaEl.style.height = `${(60 - timeLeft) / 60 * 100}%`;
+                    document.querySelectorAll('.checkpoint').forEach((cp, i) => cp.classList.toggle('active', i < currentStep - 1));
+                    setTimeout(() => {
+                        btn.classList.remove('correct');
+                        loadQuestion();
+                    }, 700);
+                } else {
+                    streak = 0;
+                    timeLeft -= 5;
+                    if (timeLeft < 0) timeLeft = 0;
+                    timerEl.textContent = timeLeft;
+                    lavaEl.style.height = `${(60 - timeLeft) / 60 * 100}%`;
+                    correctAnswerEl.textContent = `Wrong! Correct: ${currentQuestion.definition}`;
+                    correctAnswerEl.style.visibility = "visible";
+                    btn.classList.add('incorrect');
+                    questionContainer.style.animation = 'shake 0.5s';
+                    setTimeout(() => {
+                        btn.classList.remove('incorrect');
+                        correctAnswerEl.style.visibility = "hidden";
+                        questionContainer.style.animation = '';
+                    }, 1000);
+                }
+            }
+
+            function updatePlayerPosition() {
+                const stepHeight = (450 - 20) / 20;
+                const newBottom = 10 + (currentStep - 1) * stepHeight;
+                playerEl.style.bottom = `${newBottom}px`;
+            }
+
+            function endGame(message) {
+                clearInterval(timerInterval);
+                correctAnswerEl.textContent = `${message} Final Score: ${score}`;
+                correctAnswerEl.style.visibility = "visible";
+                optionsEl.innerHTML = "";
+                wordEl.textContent = "";
+                playerEl.style.display = "none";
+                startBtn.focus();
+            }
+
+            function useCrystal() {
+                if (crystals > 0) {
+                    crystals--;
+                    crystalsEl.textContent = crystals;
+                    timeLeft += 10;
+                    if (timeLeft > 60) timeLeft = 60;
+                    timerEl.textContent = timeLeft;
+                    lavaEl.style.height = `${(60 - timeLeft) / 60 * 100}%`;
+                    if (crystals === 0) useCrystalBtn.disabled = true;
+                }
+            }
+
+            function shuffleArray(array) {
+                for (let i = array.length - 1; i > 0; i--) {
+                    const j = Math.floor(Math.random() * (i + 1));
+                    [array[i], array[j]] = [array[j], array[i]];
+                }
+                return array;
+            }
+
+            startBtn.addEventListener("click", startGame);
+            useCrystalBtn.addEventListener("click", useCrystal);
+            document.getElementById('csvFileInput').addEventListener("change", loadCSVData);
+            document.getElementById('textInput').addEventListener("change", loadCSVData);
+            document.getElementById('exportStateToURL').addEventListener("click", () => {
+                const url = new URL(window.location.href);
+                url.searchParams.set("csv", document.getElementById('textInput').value);
+                url.searchParams.set("delim", getDelim());
+                url.searchParams.set("rowDelim", getRowDelim());
+                window.history.pushState({}, "", url);
+                alert("Shareable link copied to clipboard!");
+                navigator.clipboard.writeText(url.toString());
+            });
+            document.getElementById('clearButton').addEventListener("click", () => {
+                const csvFileInput = document.getElementById('csvFileInput');
+                const newInput = csvFileInput.cloneNode();
+                csvFileInput.parentNode.replaceChild(newInput, csvFileInput);
+                document.getElementById('textInput').value = "";
+                loadCSVData();
+            });
+            document.getElementById("csvSettings").addEventListener("change", loadCSVData);
+
+            loadCSVData();
+        });
+    </script>
+</body>
+</html>

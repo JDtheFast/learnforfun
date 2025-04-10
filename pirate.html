@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocab Pirate Plunder</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Pirata+One&display=swap');
+
+    body {
+      font-family: 'Pirata One', cursive;
+      margin: 0;
+      padding: 20px;
+      background: url('https://www.transparenttextures.com/patterns/paper-fibers.png') repeat, #e0c097;
+      overflow-y: scroll;
+      overflow-x: hidden;
+    }
+
+    #gameContainer {
+      width: 80%;
+      max-width: 800px;
+      margin: 0 auto;
+      background: url('https://www.transparenttextures.com/patterns/wood-pattern.png') repeat;
+      border: 5px solid #8B0000;
+      border-radius: 10px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      padding: 10px;
+    }
+
+    #scoreBoard {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 15px;
+      background: #3c2f2f;
+      color: #ffd700;
+      border-bottom: 3px solid #ffd700;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    .score-holder, #levelDisplay {
+      font-size: 28px;
+      font-weight: 400;
+    }
+
+    #questionContainer {
+      height: 400px;
+      position: relative;
+      background: url('https://www.transparenttextures.com/patterns/wave.png') repeat, #87CEEB;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 3px solid #3c2f2f;
+    }
+
+    .chest {
+      position: absolute;
+      padding: 15px 25px;
+      background: url('https://www.transparenttextures.com/patterns/old-map.png') repeat, #8B4513;
+      border: 2px solid #ffd700;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      font-size: 23px;
+      color: #fff;
+      text-shadow: 1px 1px 2px #000;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 20px;
+    }
+
+    .island {
+      position: absolute;
+      bottom: 150px;
+      width: 150px;
+      padding: 10px;
+      background: url('https://www.transparenttextures.com/patterns/palm-trees.png') repeat, #228B22;
+      color: #fff;
+      text-align: center;
+      border: 2px solid #3c2f2f;
+      border-radius: 6px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+      font-size: 16px;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    .island:nth-child(2) { left: 100px; }
+    .island:nth-child(3) { left: 325px; }
+    .island:nth-child(4) { left: 550px; }
+
+    .ship {
+      position: absolute;
+      bottom: 100px;
+      width: 150px;
+      height: 100px;
+      transition: left 0.2s ease;
+    }
+
+    .ship img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.4));
+    }
+
+    @keyframes sailForward {
+      0% { transform: translateX(0) rotate(0deg); }
+      50% { transform: translateX(20px) rotate(5deg); }
+      100% { transform: translateX(0) rotate(0deg); }
+    }
+
+    .sailing {
+      animation: sailForward 0.5s ease-in-out;
+    }
+
+    .correct {
+      background: #32CD32;
+      border-color: #ffd700;
+    }
+
+    .incorrect {
+      background: #FF6347;
+      color: #fff;
+      animation: shake 0.5s;
+    }
+
+    @keyframes shake {
+      0% { transform: translateX(0); }
+      25% { transform: translateX(-5px); }
+      50% { transform: translateX(5px); }
+      75% { transform: translateX(-5px); }
+      100% { transform: translateX(0); }
+    }
+
+    #correctAnswerDisplay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 24px;
+      font-weight: 400;
+      color: #ffd700;
+      background: rgba(60, 47, 47, 0.9);
+      padding: 20px;
+      border: 2px solid #ffd700;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.4);
+      visibility: hidden;
+      z-index: 100;
+      text-shadow: 2px 2px 4px #000;
+    }
+
+    button {
+      padding: 10px 20px;
+      font-size: 20px;
+      background: #8B4513;
+      color: #ffd700;
+      border: 2px solid #ffd700;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    button:hover, .fake-button:hover {
+      background: #8B0000;
+    }
+
+    .settings {
+      display: inline-flex;
+      margin-top: 10px;
+      width: 100%;
+      color: #ffd700;
+      text-shadow: 1px 1px 2px #000;
+    }
+
+    #left, #right {
+      width: 50%;
+      padding: 10px;
+    }
+
+    #csvFileInputContainer {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      margin-bottom: 10px;
+    }
+
+    .fake-button {
+      padding: 10px 20px;
+      background: #8B4513;
+      border: 2px solid #ffd700;
+      border-radius: 6px;
+      cursor: pointer;
+      font-size: 14px;
+      color: #ffd700;
+      text-shadow: 1px 1px 2px #000;
+      transition: background-color 0.2s;
+    }
+
+    #textInput {
+      width: 100%;
+      height: 100px;
+      margin-top: 10px;
+      padding: 10px;
+      box-sizing: border-box;
+      background: #f0e4c8;
+      border: 2px solid #3c2f2f;
+      border-radius: 6px;
+      color: #3c2f2f;
+      font-family: 'Pirata One', cursive;
+      font-size: 16px;
+    }
+
+    #csvSettings {
+      display: inline-flex;
+    }
+
+    #delim, #rowDelim {
+      display: inline-grid;
+      justify-content: left;
+      margin-right: 20px;
+    }
+
+    #delim > label, #rowDelim > label {
+      justify-self: center;
+      font-size: 20px;
+    }
+
+    #delim-comma, #delim-tab, #delim-custom, #rowDelim-comma, #rowDelim-tab, #rowDelim-custom {
+      justify-self: left;
+      margin: 5px 0;
+    }
+
+    #customDelimiter, #customRowDelimiter {
+      width: 80px;
+      margin-left: 5px;
+      padding: 5px;
+      background: #f0e4c8;
+      border: 2px solid #3c2f2f;
+      border-radius: 6px;
+      color: #3c2f2f;
+      font-family: 'Pirata One', cursive;
+    }
+
+    @media (max-width: 600px) {
+      #gameContainer { width: 95%; }
+      .chest, .island { font-size: 16px; padding: 8px 16px; }
+      .ship { width: 120px; height: 80px; }
+      .score-holder, #levelDisplay { font-size: 22px; }
+      .settings { flex-direction: column; }
+      #left, #right { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <div id="gameContainer">
+    <div id="scoreBoard">
+      <div class="score-holder">Booty: <span id="score">0</span></div>
+      <div id="levelDisplay">Sea: <span id="level">1</span></div>
+    </div>
+    <div id="questionContainer">
+      <div class="chest">Loading...</div>
+      <div class="island">Definition 1</div>
+      <div class="island">Definition 2</div>
+      <div class="island">Definition 3</div>
+      <div class="ship"><img src="https://cdn.creazilla.com/cliparts/1723259/pirate-ship-clipart-lg.png" alt="Pirate Ship"></div>
+      <div id="correctAnswerDisplay">Correct Answer: <span id="correctAnswer"></span></div>
+    </div>
+    <button id="startButton">Hoist the Sails!</button>
+    <div class="settings">
+      <div id="left">
+        <div id="csvFileInputContainer">
+          <label for="csvFileInput" class="fake-button">Upload Yer Treasure Map</label>
+          <input id="csvFileInput" type="file" accept=".csv" style="display: none;">
+          <label for="clearButton" class="fake-button">Clear the Map</label>
+          <input id="clearButton" type="button" value="Clear" style="display: none;">
+          <span>Or</span>
+        </div>
+        <textarea id="textInput" placeholder="Paste yer loot list here, ex:
+term, definition"></textarea>
+      </div>
+      <div id="right">
+        <div id="csvSettings">
+          <div id="delim">
+            <label>Delimiter</label>
+            <div id="delim-comma">
+              <input type="radio" id="comma" name="delimiter" value="," checked>
+              <label for="comma">Comma</label>
+            </div>
+            <div id="delim-tab">
+              <input type="radio" id="tab" name="delimiter" value="\t">
+              <label for="tab">Tab</label>
+            </div>
+            <div id="delim-custom">
+              <input type="radio" id="custom" name="delimiter" value="custom">
+              <label for="custom"><input type="text" id="customDelimiter" placeholder="custom"></label>
+            </div>
+          </div>
+          <div id="rowDelim">
+            <label>Row Delimiter</label>
+            <div id="rowDelim-comma">
+              <input type="radio" id="rowComma" name="rowDelimiter" value="\n" checked>
+              <label for="rowComma">Newline</label>
+            </div>
+            <div id="rowDelim-tab">
+              <input type="radio" id="rowTab" name="rowDelimiter" value=";">
+              <label for="rowTab">Semicolon</label>
+            </div>
+            <div id="rowDelim-custom">
+              <input type="radio" id="rowCustom" name="rowDelimiter" value="custom">
+              <label for="rowCustom"><input type="text" id="customRowDelimiter" placeholder="custom"></label>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let terms = [];
+    let currentTerm;
+    let score = 0;
+    let level = 1;
+    let selectedIsland = 1;
+    let gameStarted = false;
+
+    const fallbackTerms = [
+      { term: "anatomy", definition: "the study of body structure" },
+      { term: "physiology", definition: "the study of body function" },
+      { term: "pathology", definition: "the study of diseases" }
+    ];
+
+    function shuffle(array) {
+      for (let i = array.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [array[i], array[j]] = [array[j], array[i]];
+      }
+    }
+
+    function loadNextTerm() {
+      currentTerm = terms[Math.floor(Math.random() * terms.length)];
+      const chest = document.querySelector('.chest');
+      chest.textContent = currentTerm.term;
+
+      const incorrectIndices = [];
+      while (incorrectIndices.length < 2) {
+        const idx = Math.floor(Math.random() * terms.length);
+        if (idx !== terms.indexOf(currentTerm) && !incorrectIndices.includes(idx)) {
+          incorrectIndices.push(idx);
+        }
+      }
+      const incorrectDefinitions = incorrectIndices.map(i => terms[i].definition);
+
+      const definitions = [currentTerm.definition, ...incorrectDefinitions];
+      shuffle(definitions);
+
+      const islands = document.querySelectorAll('.island');
+      islands.forEach((island, index) => {
+        island.textContent = definitions[index];
+        island.classList.remove('correct', 'incorrect');
+      });
+
+      document.getElementById('correctAnswerDisplay').style.visibility = 'hidden';
+    }
+
+    function updateShipPosition() {
+      const ship = document.querySelector('.ship');
+      const positions = [175, 400, 625];
+      ship.style.left = positions[selectedIsland] + 'px';
+    }
+
+    function checkAnswer(islandIndex) {
+      const islands = document.querySelectorAll('.island');
+      const selectedDefinition = islands[islandIndex].textContent;
+      const selectedIslandElem = islands[islandIndex];
+
+      if (selectedDefinition === currentTerm.definition) {
+        score += 10 * level;
+        document.getElementById('score').textContent = score;
+        selectedIslandElem.classList.add('correct');
+
+        const ship = document.querySelector('.ship');
+        ship.classList.add('sailing');
+
+        ship.addEventListener('animationend', () => {
+          ship.classList.remove('sailing');
+        }, { once: true });
+
+        setTimeout(() => {
+          selectedIslandElem.classList.remove('correct');
+          loadNextTerm();
+        }, 500);
+      } else {
+        selectedIslandElem.classList.add('incorrect');
+        document.getElementById('correctAnswerDisplay').textContent = `Correct Answer: ${currentTerm.definition}`;
+        document.getElementById('correctAnswerDisplay').style.visibility = 'visible';
+        setTimeout(() => {
+          selectedIslandElem.classList.remove('incorrect');
+          loadNextTerm();
+        }, 1000);
+      }
+
+      if (score >= level * 50) {
+        level++;
+        document.getElementById('level').textContent = level;
+      }
+    }
+
+    function startGame() {
+      if (terms.length < 3) {
+        alert('Not enough treasure terms, matey! Need at least 3 to plunder!');
+        return;
+      }
+      gameStarted = true;
+      document.getElementById('startButton').style.display = 'none';
+      loadNextTerm();
+      updateShipPosition();
+    }
+
+    function getDelim() {
+      if (document.getElementById('comma').checked) return ',';
+      if (document.getElementById('tab').checked) return '\t';
+      return document.getElementById('customDelimiter').value;
+    }
+
+    function getRowDelim() {
+      if (document.getElementById('rowComma').checked) return '\n';
+      if (document.getElementById('rowTab').checked) return ';';
+      return document.getElementById('customRowDelimiter').value;
+    }
+
+    function parseCSV(text) {
+      const lines = text.trim().split(getRowDelim());
+      terms = lines.slice(1).map(line => {
+        const [term, definition] = line.split(getDelim());
+        return { term, definition };
+      }).filter(item => item.term && item.definition && item.term.trim() && item.definition.trim());
+      if (terms.length >= 3) {
+        document.querySelector('.chest').textContent = 'Press "Hoist the Sails!" to begin';
+      } else {
+        document.querySelector('.chest').textContent = 'Not enough loot! Add more terms, matey!';
+      }
+    }
+
+    function loadCSVData() {
+      const textInput = document.getElementById('textInput').value;
+      if (textInput.trim()) {
+        parseCSV(textInput);
+      } else if (document.getElementById('csvFileInput').files[0]) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          parseCSV(e.target.result);
+          document.getElementById('textInput').value = e.target.result;
+        };
+        reader.readAsText(document.getElementById('csvFileInput').files[0], 'UTF-8');
+      } else {
+        fetch('medical_terms.csv')
+          .then(response => {
+            if (!response.ok) throw new Error('CSV not found');
+            return response.text();
+          })
+          .then(data => {
+            parseCSV(data);
+          })
+          .catch(() => {
+            terms = fallbackTerms;
+            document.querySelector('.chest').textContent = 'No map found! Usin’ fallback loot.';
+          });
+      }
+    }
+
+    document.addEventListener('keydown', (event) => {
+      if (!gameStarted) return;
+      const key = event.key.toLowerCase(); // Case-insensitive for WASD
+      if ((key === 'a' || key === 'arrowleft') && selectedIsland > 0) {
+        selectedIsland--;
+      } else if ((key === 'd' || key === 'arrowright') && selectedIsland < 2) {
+        selectedIsland++;
+      } else if (key === 'w' || key === 's' || key === ' ') {
+        checkAnswer(selectedIsland);
+      }
+      updateShipPosition();
+    });
+
+    document.getElementById('startButton').addEventListener('click', startGame);
+    document.getElementById('csvFileInput').addEventListener('change', loadCSVData);
+    document.getElementById('textInput').addEventListener('change', loadCSVData);
+    document.getElementById('csvSettings').addEventListener('change', loadCSVData);
+    document.getElementById('clearButton').addEventListener('click', () => {
+      document.getElementById('csvFileInput').value = '';
+      document.getElementById('textInput').value = '';
+      terms = [];
+      document.querySelector('.chest').textContent = 'Load yer treasure map, matey!';
+    });
+
+    loadCSVData();
+  </script>
+</body>
+</html>

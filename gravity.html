@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+body {
+    font-family: 'Inter', sans-serif;
+    margin: 0;
+    padding: 20px;
+    background-color: #f9f9f9;
+    overflow-y: scroll;
+    overflow-x: hidden;
+}
+
+#gameContainer {
+    width: 80%;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+#questionContainer {
+    height: 400px;
+    position: relative;
+    background-color: white;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+#scoreBoard {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 0;
+    border-bottom: 1px solid #ddd;
+}
+
+.score-holder, #levelDisplay {
+    font-size: 24px;
+    font-weight: 500;
+}
+
+#answerInput {
+    width: 100%;
+    padding: 10px;
+    font-size: 18px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    box-sizing: border-box;
+    margin-top: 10px;
+}
+
+#answerInput:focus {
+    outline: none;
+    border-color: #007BFF;
+    box-shadow: 0 0 0 2px rgba(0, 123, 255, 0.25);
+}
+
+.question {
+    position: absolute;
+    padding: 10px 20px;
+    background-color: #e0f7fa;
+    border-radius: 4px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-size: 18px;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.incorrect-input {
+    box-shadow: 0 0 10px red; /* Red glow effect */
+    animation: shake 0.5s;    /* Shake animation for 0.5 seconds */
+}
+
+@keyframes shake {
+    0% { transform: translateX(-50%) translateX(0); }
+    25% { transform: translateX(-50%) translateX(-5px); }
+    50% { transform: translateX(-50%) translateX(5px); }
+    75% { transform: translateX(-50%) translateX(-5px); }
+    100% { transform: translateX(-50%) translateX(0); }
+}
+
+.failed {
+    background-color: #ffcccb;
+    color: #d32f2f;
+}
+
+#correctAnswerDisplay {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    font-size: 24px;
+    font-weight: 600;
+    color: #333;
+    background-color: rgba(255, 255, 255, 0.8);
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    white-space: pre-line;
+    visibility: hidden;
+    z-index: 100;
+}
+
+button {
+    padding: 10px 20px;
+    font-size: 16px;
+    background-color: #007BFF;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+button:hover {
+    background-color: #0056b3;
+}
+
+.fake-button {
+    padding: 10px 20px;
+    background-color: #f0f0f0;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    transition: background-color 0.2s;
+}
+
+.fake-button:hover {
+    background-color: #e0e0e0;
+}
+
+.settings {
+    display: inline-flex;
+}
+
+#left {
+    width: 50%;
+}
+
+#right {
+    width: 50%;
+}
+
+#delim {
+    display: inline-grid;
+    justify-content: left;
+}
+
+#csvSettings {
+    display: inline-flex;
+}
+
+#delim > label:nth-child(1) {
+    justify-self: center;
+}
+
+#delim-comma {
+    justify-self: left;
+}
+
+#delim-tab {
+    justify-self: left;
+}
+
+#delim-custom {
+    justify-self: left;
+    max-width: 100%;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+}
+
+#rowDelim > label:nth-child(1) {
+    justify-self: center;
+}
+
+#rowDelim-comma {
+    justify-self: left;
+}
+
+#rowDelim {
+    display: inline-grid;
+    max-width: 100%;
+}
+
+#rowDelim-tab {
+    justify-self: left;
+}
+
+#rowDelim-custom {
+    justify-self: left;
+    width: 100%;
+    display: inline-flex;
+}
+
+#inputSlider {
+    width: 100%;
+}
+
+#textInput {
+    width: 100%;
+    margin-top: 0.25rem;
+    padding: 0.25rem;
+    box-sizing: border-box;
+}
+
+#csvFileInputContainer {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+}
+
+#orId {
+    margin-right: 1rem;
+}
+
+#csvFileInputInput {
+    margin-right: 1rem;
+}
+
+#spawn-time-slider {
+    display: inline-flex;
+    width: 100%;
+    align-items: center;
+}
+
+#spawn-time {
+    font-size: 1rem;
+    white-space: nowrap;
+    margin-right: 10px;
+}
+
+#csvFileInputContainer > label:nth-child(2) {
+    width: inherit;
+}
+
+#csvFileInputContainer > span:nth-child(1) {
+    margin-left: 0.25rem;
+    margin-right: 0.25rem;
+}
+
+#delim-custom > label:nth-child(2) {
+    width: 90%;
+}
+
+#customDelimiter {
+    width: inherit;
+}
+
+#rowDelim-custom > label:nth-child(2) {
+    width: 90%;
+}
+
+#customRowDelimiter {
+    width: inherit;
+}
+
+#settings {
+    visibility: hidden;
+}
+
+@media (max-width: 600px) {
+    #gameContainer {
+        width: 95%;
+    }
+    .question {
+        font-size: 16px;
+        padding: 8px 16px;
+    }
+    #answerInput {
+        font-size: 16px;
+    }
+    button {
+        font-size: 14px;
+    }
+}
+</style>
+        <head>
+                <!-- Google tag (gtag.js) -->
+                <script async src="https://www.googletagmanager.com/gtag/js?id=G-ZY04T9FVWX"></script>
+                <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+                <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){dataLayer.push(arguments);}
+                gtag('js', new Date());
+
+                gtag('config', 'G-ZY04T9FVWX');
+                </script>
+                <meta charset="UTF-8">  <title>Quizlet Gravity Game</title>
+        </head>
+        <body>
+                <div id="gameContainer">
+                        <div id="scoreBoard">
+    <div class="score-holder">Score: <div id="score">0</div></div>
+    <div id="levelDisplay">Level: <span id="level">1</span></div>
+</div>
+                                <div id="questionContainer" class="failed">
+                                        <div id="correctAnswerDisplay" style="visibility: visible" >Loading...<span id="correctAnswer"></span></div>
+                                </div>
+                                <div>
+                                        <input type="text" id="answerInput" >
+                                </div>
+                                <button id="startButton">Start</button>
+                                <button id="importFromURL" style="display: none;">Settings & CSV</button>
+                                <div class="settings" id="settings">
+                                        <div id="left">
+                                                <div id="spawn-time-slider">
+                                                        <div id="spawn-time"> Spawn Time</div>
+                                                        <input id="inputSlider" type="range" min="1" max="1000" value="150" step="1">
+                                                </div>
+                                                <div id="csvFileInputContainer">
+                                                        <label id="csvFileInputInput" for="csvFileInput" style="display: inline-grid; border: 1px solid black; font-size: 0.7rem; white-space: nowrap; width: 50%;" class="fake-button">Upload a csv file here</label>
+                                                        <input id="csvFileInput" type="file" accept=".csv" style="display: none">
+                                                        <label for="clearButton" style="display: inline-grid; border: 1px solid black; margin-right: 0.5rem; font-size: 0.7rem; width: 40%;" class="fake-button">Clear File</label>
+                                                        <input id="clearButton" type="button" value="Clear"  style="display: none; margin-right: 0.5rem;">
+                                                        <span id="orId">Or</span>
+                                                </div>
+                                                <textarea id="textInput" placeholder="Paste csv data here, ex:&#10;question, answer"></textarea>
+                                        </div>
+                                        <div id="right">
+                                                <button id="exportStateToURL" style="width: 100%; margin-top: 0.25rem;">Get Shareable Link (may not work for large sets)</button>
+                                                <div id="csvSettings">
+                                                        <div id="delim"> 
+                                                                <label>Delimiter</label>
+                                                                <div id="delim-comma">
+                                                                        <input type="radio" id="comma" name="delimiter" value="," checked>
+                                                                        <label for="comma">Comma</label>
+                                                                </div>
+                                                                <div id="delim-tab">
+                                                                        <input type="radio" id="tab" name="delimiter" value="\t">
+                                                                        <label for="tab">Tab</label>
+                                                                </div>
+                                                                <div id="delim-custom">
+                                                                        <input type="radio" id="custom" name="delimiter" value="custom">
+                                                                        <label for="custom"><input type="text" id="customDelimiter" placeholder="custom"></label>
+                                                                </div>
+
+                                                        </div>
+                                                        <div id="rowDelim"> 
+                                                                <label>Row Delimiter</label>
+                                                                <div id="rowDelim-comma">
+                                                                        <input type="radio" id="rowComma" name="rowDelimiter" value="\n" checked>
+                                                                        <label for="rowComma">Newline</label>
+                                                                </div>
+                                                                <div id="rowDelim-tab">
+                                                                        <input type="radio" id="rowTab" name="rowDelimiter" value=";">
+                                                                        <label for="rowTab">Semicolon</label>
+                                                                </div>
+                                                                <div id="rowDelim-custom">
+                                                                        <input type="radio" id="rowCustom" name="rowDelimiter" value="custom">
+                                                                        <label for="rowCustom"><input type="text" id="customRowDelimiter" placeholder="custom"></label>
+                                                                </div>
+
+                                                        </div>
+                                                </div>
+                                                <div id="ignoreParensContainer">
+                                                        <input type="checkbox" id="ignoreParens">
+                                                        <span>Ignore text in parentheses</span>
+                                                </div>
+                                        </div>
+                                </div>
+                        </div>
+                </div>
+
+                <script>
+// script.js
+document.addEventListener('DOMContentLoaded', () => {
+        const questionContainer = document.getElementById('questionContainer');
+        const answerInput = document.getElementById('answerInput');
+        const scoreDisplay = document.getElementById('score');
+        const levelDisplay = document.getElementById('level');
+        const correctAnswerDisplay = document.getElementById('correctAnswerDisplay');
+        const inputSlider = document.getElementById('inputSlider');
+        const csvFileInput = document.getElementById('csvFileInput');
+        const startButton = document.getElementById('startButton');
+        const csvSettings = document.getElementById('csvSettings');
+        const customDelimiter = document.getElementById('customDelimiter');
+        const customRowDelimiter = document.getElementById('customRowDelimiter');
+        const comma = document.getElementById('comma');
+        const tab = document.getElementById('tab');
+        const rowComma = document.getElementById('rowComma');
+        const rowTab = document.getElementById('rowTab');
+        const csvFileInputContainer = document.getElementById('csvFileInputContainer');
+        const csTextInput = document.getElementById('textInput');
+        const ignoreParens = document.getElementById('ignoreParens');
+
+
+
+        const baseBaseSpeed = 1;
+        let baseQuestionSpawnInterval = 20 * inputSlider.value
+        let score = 0;
+        let level = 1;
+        let baseSpeed = baseBaseSpeed;
+        let questionSpawnInterval = baseQuestionSpawnInterval
+        let questionsInPlay = [];
+        let isAnsweringFailedQuestion = false;
+        let allQuestions = [];
+        let csvFileQuestions = [];
+        let csvTextQuestions = [];
+        let failedQuestions = new Set();
+        let questionsAsked = new Set();
+        let notFailedQuestions = new Set();
+        let currentRoundId =0;
+        let gameOverState = false;
+        let ignoreParensState = false;
+
+        function getDelim() {
+                if (comma.checked) {
+                        return ',';
+                } else if (tab.checked) {
+                        return '\t';
+                } else {
+                        return customDelimiter.value;
+                }
+        }
+
+        function getRowDelim() {
+                if (rowComma.checked) {
+                        return '\n';
+                } else if (rowTab.checked) {
+                        return ';';
+                } else {
+                        return customRowDelimiter.value;
+                }
+        }
+
+        function clearCsvFileInput() {
+                // get rid of the file selected in csvFileInput or do nothing
+                csvFileInput.value = '';
+                $("#textInput").val("");
+        }
+        function getData(){
+                // check if there is data in the url 
+                if(window.location.search !== '') {
+                        // hide ".settings"
+                        document.getElementById('importFromURL').style.display ="initial";
+                        document.getElementById('settings').style.visibility = 'hidden';
+                        getDataFromUrl(); 
+                        $("#spawn-time-slider").insertBefore("#settings");
+                        getCSVData(); 
+
+                } else {
+                        // then from text area
+                        document.getElementById('settings').style.visibility = 'visible';
+                        document.getElementById('importFromURL').style.display ="none";
+                        getCSVData(); 
+                }
+        }
+
+        function getCSVData()
+        {
+                // check if there is data in csvTextInput 
+                if (csTextInput.value.trim() !== '') {
+                        // parse csvTextInput
+                        let lines = csTextInput.value.split(getRowDelim());
+                        let questions = lines.map(line => {
+                                const [question, answer] = line.split(getDelim());
+                                if(ignoreParensState && answer !== undefined) {
+                                        return { question, answer: answer.replace(/\(.*?\)/g, '') };
+                                } else {
+                                        return { question, answer };
+                                }
+                        });
+                        // remove anything with undefined
+                        questions = questions.filter(q => q.question !== undefined);
+                        questions = questions.filter(q => q.answer!== undefined);
+                        // remove anything with null
+                        questions = questions.filter(q => q.question !== null);
+                        questions = questions.filter(q => q.answer!== null);
+                        // remove anything with empty
+                        questions = questions.filter(q => q.question.trim() !== '');
+                        questions = questions.filter(q => q.answer.trim() !== '');
+                        if( questions !== undefined) {
+                                allQuestions = questions;
+                        } else {
+                                allQuestions = [];
+                        }
+                } else {
+                        // check if there is data in csvFileInput
+                        if (csvFileInput.files[0] !== undefined) {
+                                let reader = new FileReader();
+                                reader.onload = function (e) {
+                                        let text = e.target.result;
+                                        let lines = text.split(getRowDelim());
+                                        let questions = lines.map(line => {
+                                                const [question, answer] = line.split(getDelim());
+                                                if(ignoreParensState && answer !== undefined){
+                                                        return { question, answer: answer.replace(/\(.*?\)/g,'') };
+                                                } else {
+                                                        return { question, answer };
+                                                }
+                                        }).filter(q => q.question && q.answer && q.question.trim() !== '' && q.answer.trim() !== '');
+
+                                        allQuestions = questions;
+                                        document.getElementById('textInput').value = text;
+                                };
+                                reader.readAsText(csvFileInput.files[0], 'UTF-8');
+                        } else {
+                                allQuestions = [];
+                        }
+                }
+        }
+
+        function getDataFromUrl(){
+                let url = new URL(window.location.href);
+                let csv = url.searchParams.get('csv');
+                let delim = url.searchParams.get('delim');
+                let rowDelim = url.searchParams.get('rowDelim');
+                let ignoreParens = url.searchParams.get('ignoreParens');
+                if(csv !== null) {
+                        csTextInput.value = csv;
+                }
+                if(delim !== null) {
+                        if(delim === ',') {
+                                comma.checked = true;
+                        } else if(delim === '\t') {
+                                tab.checked = true;
+                        } else {
+                                customDelimiter.value = delim;
+                                custom.checked = true;
+                        }
+                }
+                if(rowDelim !== null) {
+                        if(rowDelim === '\n') {
+                                rowComma.checked = true;
+                        } else if(rowDelim === ';') {
+                                rowTab.checked = true;
+                        } else {
+                                customRowDelimiter.value = rowDelim;
+                                rowCustom.checked = true;
+                        }
+                }
+                if(ignoreParens !== null) {
+                        if(ignoreParens === 'true') {
+                                ignoreParens.checked = true;
+                        } else {
+                                ignoreParens.checked = false;
+                        }
+                }
+        }
+
+        function importFromURL(){
+                // check if there is data in the url 
+                if(window.location.search === '') {
+                        $("#spawn-time-slider").insertBefore("#csvFileInputContainer");
+                        gameInit();
+                } else {
+                        // generate csv text from url
+                        let url = new URL(window.location.href);
+                        let csv = url.searchParams.get('csv');
+                        let delim = url.searchParams.get('delim');
+                        let rowDelim = url.searchParams.get('rowDelim');
+                        let ignoreParens = url.searchParams.get('ignoreParens');
+                        if(csv !== null) {
+                                csTextInput.value = csv;
+                        }
+                        // clear everything after and including the ? in the url
+                        window.history.pushState({}, '', window.location.href.split('?')[0]);
+                        // select the radio buttons based on the url
+                        console.log("on import" + delim);
+                        if(delim !== null) {
+                                if(delim === ',') {
+                                        comma.checked = true;
+                                } else if(delim === '\t') {
+                                        tab.checked = true;
+                                } else {
+                                        customDelimiter.value = delim;
+                                        custom.checked = true;
+                                }
+                        }
+                        getDataFromUrl();
+                        gameInit();
+
+                }
+                console.log(window.location);
+
+        }
+
+
+        function exportStateToURL(){
+                let url = new URL(window.location.href);
+                url.searchParams.set('csv', csTextInput.value);
+                url.searchParams.set('delim', getDelim());
+                url.searchParams.set('rowDelim', getRowDelim());
+                url.searchParams.set('ignoreParens', ignoreParensState);
+                window.history.pushState({}, '', url);
+                $("#spawn-time-slider").insertBefore("#settings");
+                gameInit();
+        }
+
+
+        function updateFromCSV() {
+                getCSVData();
+                //console.log(allQuestions);
+                //onsole.log("updateFromCSV");
+                notFailedQuestions = new Set(allQuestions.map(q => q.question));
+                resetGame();
+        }
+
+        function gameInit(){
+                if(ignoreParens.checked) {
+                        ignoreParensState = true;
+                } else {
+                        ignoreParensState = false;
+                }
+                getData();
+                setTimeout(afterData, 500);                
+        }
+
+        function afterData(){
+                console.log("afterData");
+                console.log(csTextInput.value)
+                let temp = allQuestions;
+                if(temp === undefined || temp === null) {
+                        questionContainer.classList.add('failed');
+                        correctAnswerDisplay.style.visibility = 'visible';
+                        correctAnswerDisplay.textContent = "No questions found Load a csv file below, or check your settings";
+                        return 'noquestionsfound'
+                }
+                else if(temp.length !== 0) {
+                        questionContainer.classList.add('failed');
+                        correctAnswerDisplay.style.visibility = 'visible';
+                        correctAnswerDisplay.textContent = "Press Start to begin";                      
+                        allQuestions = temp;
+                        return 'canstart';
+                } else {
+                        questionContainer.classList.add('failed');
+                        correctAnswerDisplay.style.visibility = 'visible';
+                        correctAnswerDisplay.textContent = "No questions found Load a csv file below, or check your settings";
+                        return 'noquestionsfound';
+                }
+        }
+
+        function startGame() {
+                //console.log("startGame");
+                //console.log(allQuestions);
+
+                if (allQuestions.length === 0) {
+                        alert('No questions found');
+                        return;
+                } else {
+                        resetGame();
+                        // set focus to answerInput
+                        setTimeout(selectQuestion, 1000, currentRoundId);
+                        questionContainer.classList.remove('failed');
+                        correctAnswerDisplay.style.visibility = 'hidden';
+                        correctAnswerDisplay.textContent = '';
+                        answerInput.focus();
+                }
+        }
+
+        function updateLevelDisplay() {
+                levelDisplay.textContent = level.toString();
+        }
+
+        function getRandomHorizontalPosition() {
+                const containerWidth = questionContainer.clientWidth;
+                return Math.floor(Math.random() * (containerWidth - 100));
+        }
+
+
+        function createQuestionElement(questionText, answer) {
+                const questionEl = document.createElement('div');
+                questionEl.classList.add('question');
+                // check if question is in failedQuestions
+                let isFailedBefore = failedQuestions.has(questionText);
+                if (isFailedBefore) {
+                        questionEl.classList.add('failed');
+                }
+                questionEl.textContent = questionText;
+                questionEl.dataset.answer = answer;
+                questionEl.dataset.question = questionText;
+                questionEl.style.top = '0px';
+                questionEl.style.left = `${getRandomHorizontalPosition()}px`;
+                questionContainer.appendChild(questionEl);
+                questionsInPlay.push(questionEl);
+        }
+
+        function updateScore(points) {
+                score += points;
+                scoreDisplay.textContent = score;
+        }
+
+        function resetGame(input){
+
+                score = 0;
+                level = 1;
+                isAnsweringFailedQuestion = false;
+                failedQuestions = new Set();
+                questionsAsked = new Set();
+                notFailedQuestions = new Set(allQuestions.map(q => q.question));
+                currentRoundId++;
+                // remove all questions from questionContainer
+                // if not correctAnswerDisplay
+                while
+                (questionContainer.firstChild) {
+                        questionContainer.removeChild(questionContainer.firstChild);
+                }
+                questionContainer.appendChild(correctAnswerDisplay);
+                //console.log('resetGame');
+                baseSpeed = baseBaseSpeed;
+                questionSpawnInterval = baseQuestionSpawnInterval;
+                updateScore(0);
+                updateLevelDisplay();
+                // set start to focus
+                if(input !== undefined){
+                        if(input === 1) {
+                        } else {
+                                startButton.focus();
+                                questionContainer.classList.add('failed');
+                                correctAnswerDisplay.style.visibility = 'visible';
+                                correctAnswerDisplay.textContent = "Press Start to begin";                      
+                        }
+                } else {
+                        startButton.focus();
+                        questionContainer.classList.add('failed');
+                        correctAnswerDisplay.style.visibility = 'visible';
+                        correctAnswerDisplay.textContent = "Press Start to begin";                      
+                }                
+                answerInput.value = '';
+
+
+        }
+
+        function gameOver() {
+                alert('Game Over! Your score: ' + score);
+                resetGame();
+                // reset everything
+                // everything
+                // reload page
+        }
+
+        function handleFailedQuestion(questionEl) {
+                correctAnswerDisplay.textContent = "Correct answer: "+ questionEl.dataset.answer +"\nQuestion: " + questionEl.dataset.question; // Show the correct answer elsewhere
+                failedQuestions.add(questionEl.textContent); // Add to failedQuestions
+                notFailedQuestions.delete(questionEl.textContent); // Remove from notFailedQuestions
+                isAnsweringFailedQuestion = true; // Pause spawning new questions
+                // set questioncontainer background to red
+                questionContainer.classList.add('failed');
+                correctAnswerDisplay.style.visibility = 'visible';
+                // for each question in questionsInPlay add opacity 50%
+                questionsInPlay.forEach(questionEl => {
+                        questionEl.style.opacity = '0.5';
+                });
+        }
+
+        function dropQuestions() {
+                if (isAnsweringFailedQuestion){
+                        setTimeout(dropQuestions, 30);
+                        return; // Stop dropping questions if a question has failed
+                }
+
+                questionsInPlay.forEach(questionEl => {
+                        if(gameOverState) {
+                                return;
+                        }
+                        const currentTop = parseInt(questionEl.style.top);
+                        if (currentTop > 400) {
+                                if (questionEl.classList.contains('failed')) {
+                                        handleFailedQuestion(questionEl);
+                                        alert('Game Over! Your score: ' + score);
+                                        answerInput.value = '';
+                                        console.log('your score: ' + score);
+                                        resetGame();
+                                        return;
+                                } else {
+                                        handleFailedQuestion(questionEl);
+                                        questionContainer.removeChild(questionEl);
+                                }
+                        } else {
+                                questionEl.style.top = currentTop + baseSpeed + 'px';
+                        }
+                });
+                questionsInPlay = questionsInPlay.filter(questionEl => questionEl.parentNode !== null);
+                setTimeout(dropQuestions, 30);
+        }
+
+
+        function selectQuestion(roundId) {
+                //console.log(allQuestions)
+                if (allQuestions.length === 0) {
+                        // 
+                } 
+
+                if(roundId !== currentRoundId) {
+                        return;
+                } else {
+                        if (!isAnsweringFailedQuestion) {
+                                let allowedQuestions = allQuestions.filter(q => !questionsAsked.has(q.question));
+                                if (allowedQuestions.length > 0) {
+                                        let questionData = allowedQuestions[Math.floor(Math.random() * allowedQuestions.length)];
+                                        createQuestionElement(questionData.question, questionData.answer);
+                                        questionsAsked.add(questionData.question);
+                                } else {
+                                        // if there are no more questions falling
+                                        if(questionsInPlay.length === 0) {
+                                                level++;
+                                                updateLevelDisplay();
+                                                baseSpeed *= 1.1;
+                                                questionSpawnInterval *= 0.9;
+                                                // Reset for the new level
+                                                notFailedQuestions = new Set(allQuestions.map(q => q.question));
+                                                // remove all questions in failedQuestions from notFailedQuestions
+                                                failedQuestions.forEach(failedQuestion => {
+                                                        notFailedQuestions.delete(failedQuestion);
+                                                });
+                                                // clear questionsAsked
+                                                questionsAsked = new Set();
+                                        }
+                                        setTimeout(selectQuestion, 300 + 20*level,currentRoundId)
+                                        return;
+                                }
+                                setTimeout(selectQuestion, questionSpawnInterval,currentRoundId)
+                        }
+                }
+        }
+
+function checkAnswer(e) {
+    let currentAnswer = answerInput.value.trim().toLowerCase();
+
+    if (isAnsweringFailedQuestion) {
+        // Handle answering a failed question (game-over state)
+        let correctAnswer = correctAnswerDisplay.textContent.slice(16).split("\nQuestion: ")[0].trim().toLowerCase();
+        if (correctAnswer === currentAnswer) {
+            updateScore(Math.floor(10 * level * currentAnswer.length * Math.random() * 0.5));
+            isAnsweringFailedQuestion = false;
+            questionContainer.classList.remove('failed');
+            correctAnswerDisplay.style.visibility = 'hidden';
+            setTimeout(selectQuestion, questionSpawnInterval, currentRoundId);
+            questionsInPlay.forEach(questionEl => {
+                questionEl.style.opacity = '1';
+            });
+            answerInput.value = '';
+        }
+    } else {
+        // Check for correct answers during normal gameplay
+        let matched = false;
+        questionsInPlay.forEach(questionEl => {
+            if (questionEl.dataset.answer.trim().toLowerCase() === currentAnswer) {
+                questionContainer.removeChild(questionEl);
+                matched = true;
+                updateScore(Math.floor(10 * level * currentAnswer.length * Math.random() * 0.5));
+            }
+        });
+
+        if (matched) {
+            questionsInPlay = questionsInPlay.filter(questionEl => questionEl.parentNode !== null);
+            answerInput.value = '';
+        } 
+        // Trigger shake effect on Enter with incorrect answer
+        else if (e && e.type === 'keydown' && e.key === 'Enter') {
+            questionsInPlay.forEach(questionEl => {
+                questionEl.classList.add('incorrect-input');
+                setTimeout(() => {
+                    questionEl.classList.remove('incorrect-input');
+                }, 500); // Remove after 0.5s (matches animation duration)
+            });
+            answerInput.value = '';
+        }
+    }
+}
+
+        inputSlider.addEventListener('change', (e) => {
+                resetGame();
+                baseQuestionSpawnInterval = 20 * inputSlider.value;
+                questionSpawnInterval = baseQuestionSpawnInterval;
+        });
+        answerInput.addEventListener('keydown', (e) => {
+    checkAnswer(e);
+});
+answerInput.addEventListener('keyup', (e) => {
+    checkAnswer(e);
+});
+        startButton.addEventListener('click', startGame);
+        // on csvFileInput change
+        csvFileInput.addEventListener('change', () => {
+                gameInit();
+                $("textInput").val("");
+                //console.log(allQuestions);
+                resetGame();
+        });
+        // on csvTextInput change
+        csTextInput.addEventListener('change', () => {
+                gameInit();
+                resetGame();
+                startButton.focus();
+        });
+
+        csTextInput.addEventListener('keyup', () => {
+                gameInit();
+                resetGame(1);
+        });
+
+        csTextInput.addEventListener('focusout', () => {
+                startButton.focus(); 
+        });
+
+
+        // on radio change gameInit
+        csvSettings.addEventListener('change', () => {
+                gameInit();
+                resetGame();
+        });
+        ignoreParens.addEventListener('change', () =>{
+                gameInit();
+                resetGame();
+        });
+
+        document.getElementById('exportStateToURL').addEventListener('click', exportStateToURL);
+        document.getElementById('importFromURL').addEventListener('click', importFromURL);
+        document.getElementById('clearButton').addEventListener('click', clearCsvFileInput);
+        setTimeout(dropQuestions, 20); // Adjust for speed
+        getCSVData();
+        setTimeout(gameInit, 500);
+
+        $("#spawn-time-slider").on("input", function() {
+
+                var questionDropInterval = $("#inputSlider").val() * 20;
+                // generate a string of n _'s that is the difference in length between questionDropInterval and "20000"
+                var n = Math.abs(questionDropInterval.toString().length - "20000".length);
+                var zeros = "";
+                for (var i = 0; i < n; i++) {
+                        zeros += "_";
+                }
+                $("#spawn-time").text("Spawn Time: " + zeros + questionDropInterval + "ms");
+        });
+        var questionDropInterval = $("#inputSlider").val() * 20;
+        $("#spawn-time").text("Spawn Time: " + questionDropInterval + "ms");
+
+
+        startButton.focus();
+}); </script>
+        </body>
+</html>
